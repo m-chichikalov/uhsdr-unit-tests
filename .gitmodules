@@ -1,0 +1,4 @@
+[submodule "UHSDR"]
+	path = UHSDR
+	url = https://github.com/df8oe/UHSDR.git
+	branch = active-devel
