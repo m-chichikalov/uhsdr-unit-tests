@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 add_subdirectory(lib/catch2)
 
 set(CATCH_ALL_TESTS_SRCS
-        tests/test.cpp
+        tests/tes_cw_gen_host.cpp
         )
 
 add_executable(catch-all-tests ${CATCH_ALL_TESTS_SRCS})
