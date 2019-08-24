@@ -337,10 +337,10 @@
 //uint32_t RadioManagement_GetTXDialFrequency();
 //uint32_t RadioManagement_GetRXDialFrequency();
 //int32_t  RadioManagement_GetCWDialOffset();
-//
-//void RadioManagement_Request_TxOn();
-//void RadioManagement_Request_TxOff();
-//
+
+void RadioManagement_Request_TxOn();
+void RadioManagement_Request_TxOff();
+
 //bool RadioManagement_SwitchTxRx_Possible();
 //bool RadioManagement_IsTxAtZeroIF(uint8_t dmod_mode, uint8_t digital_mode);
 //

@@ -18,13 +18,12 @@ typedef enum
     FT817 = 1
 } CatInterfaceProtocol;
 
-
-//CatInterfaceState CatDriver_GetInterfaceState();
-//int CatDriver_InterfaceBufferAddData(uint8_t c);
-//void CatDriver_HandleProtocol();
-//bool CatDriver_CloneOutStart();
-//bool CatDriver_CloneInStart();
-//bool CatDriver_CWKeyPressed();
-//bool CatDriver_CatPttActive();
+CatInterfaceState CatDriver_GetInterfaceState();
+int CatDriver_InterfaceBufferAddData(uint8_t c);
+void CatDriver_HandleProtocol();
+bool CatDriver_CloneOutStart();
+bool CatDriver_CloneInStart();
+bool CatDriver_CWKeyPressed();
+bool CatDriver_CatPttActive();
 
 #endif

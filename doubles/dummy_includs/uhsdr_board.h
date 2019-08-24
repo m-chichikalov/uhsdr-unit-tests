@@ -740,10 +740,10 @@ typedef enum {
 //#ifdef UI_BRD_OVI40
 //void Board_BlueLed(ledstate_t state);
 //#endif
-//
-//bool Board_PttDahLinePressed();
-//bool Board_DitLinePressed();
-//
+
+bool Board_PttDahLinePressed();
+bool Board_DitLinePressed();
+
 //uint32_t Board_RamSizeGet();
 //void Board_RamSizeDetection();
 //const char* Board_BootloaderVersion();

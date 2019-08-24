@@ -21,27 +21,27 @@ extern "C" {
 
 //uint8_t DigiModes_TxBufferHasData();
 
-///*
-// * The Digi buffer has multi consumers, some of them trying to get an entry
-// * from the buffer at the same time.
-// * to organize it, the allowed consumer for buffer should be set before using it.
-// *
-// * @return - previous consumer
-// */
-//digi_buff_consumer_t DigiModes_Set_BufferConsumer( digi_buff_consumer_t consumer );
-//void                 DigiModes_Restore_BufferConsumer();
+/*
+ * The Digi buffer has multi consumers, some of them trying to get an entry
+ * from the buffer at the same time.
+ * to organize it, the allowed consumer for buffer should be set before using it.
+ *
+ * @return - previous consumer
+ */
+digi_buff_consumer_t DigiModes_Set_BufferConsumer( digi_buff_consumer_t consumer );
+void                 DigiModes_Restore_BufferConsumer();
+
+/*
+ * @return - true if element was removed from buffer and available in c_ptr
+ *           false if there is no elements in buffer or this consumer not
+ *           allowed to remove elements from buffer.
+ */
+bool     DigiModes_TxBufferRemove( uint8_t* c_ptr, digi_buff_consumer_t consumer );
+
+int32_t  DigiModes_TxBufferPutChar( uint8_t c, digi_buff_consumer_t source );
+void     DigiModes_TxBufferPutSign( const char* s, digi_buff_consumer_t source );
 //
-///*
-// * @return - true if element was removed from buffer and available in c_ptr
-// *           false if there is no elements in buffer or this consumer not
-// *           allowed to remove elements from buffer.
-// */
-//bool     DigiModes_TxBufferRemove( uint8_t* c_ptr, digi_buff_consumer_t consumer );
-//
-//int32_t  DigiModes_TxBufferPutChar( uint8_t c, digi_buff_consumer_t source );
-//void     DigiModes_TxBufferPutSign( const char* s, digi_buff_consumer_t source );
-//
-//void     DigiModes_TxBufferReset( );
+void     DigiModes_TxBufferReset( );
 //
 //#if defined(_UNIT_TEST_)
 //    uint32_t DigiModes_TxBufferGetCurrentConsumer( void );
