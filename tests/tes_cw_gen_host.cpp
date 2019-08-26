@@ -254,12 +254,6 @@ SCENARIO( "Straight key: ", "[]" ) {
                 CAPTURE( ps.key_timer, ps.break_timer, ps.sm_tbl_ptr );
                 CHECK( ts.txrx_mode == TRX_MODE_RX );
             }
-        }
-
-        WHEN( "After Dah pressed and released" ) {
-            set_dah( true );
-            CwGen_Process( i, q, 32 );
-            set_dah( false );
             THEN( "Process() return true for 2*(CW_SMOOTH_TBL_SIZE*CW_SMOOTH_LEN)/IQ_BLOCK_SIZE calls, and false for break_timer." ) {
                 uint32_t timer =
                       2 * ( CW_SMOOTH_TBL_SIZE * CW_SMOOTH_LEN ) / IQ_BLOCK_SIZE - 1 /*as we already call once*/;
@@ -379,7 +373,6 @@ SCENARIO( "Iambic B CW mode: ", "[]" ) {
         digi_buffer.reset_state();
         WHEN( "" ) {
             THEN( "" ) {
-
             }
         }
     }
@@ -387,9 +380,43 @@ SCENARIO( "Iambic B CW mode: ", "[]" ) {
 
 SCENARIO( "Ultimatic CW mode: ", "[]" ) {
     GIVEN( "" ) {
+        set_ts_default();
+        set_dah( false );
+        set_dit( false );
+        CwGen_Init();
+        ts.cw_keyer_mode = CW_KEYER_MODE_ULTIMATE;
+        ts.txrx_mode = TRX_MODE_TX;
         digi_buffer.reset_state();
-        WHEN( "" ) {
-            THEN( "" ) {
+        WHEN( "paddles depressed to imitate 'P'" ) {
+            set_dit( true );
+            // uint32_t c_time = (( ps.dit_time + ps.dah_time) + 2*ps.pause_time) + ( ps.dit_time + ps.pause_time );
+            digi_buffer.run( ps.dit_time /*+ ps.pause_time*/ );
+            set_dah( true );
+            digi_buffer.run( (ps.dah_time + ps.pause_time)*2 );
+            set_dah( false );
+            digi_buffer.run( ps.dit_time + ps.pause_time );
+            set_dit( false );
+            digi_buffer.run( ps.pause_time*2 );
+            THEN( "the digibuffer should contains 'P'" ) {
+                CAPTURE( ps.space_timer, ps.cw_state, ps.break_timer, ps.port_state, ps.sending_char, digi_buffer.in, digi_buffer.out );
+                CHECK( digi_buffer.out == "P" );
+            }
+        }
+        WHEN( "paddles depressed to imitate 'X'" ) {
+            set_dah( true );
+            CwGen_DahIRQ();
+            // uint32_t c_time = (( ps.dit_time + ps.dah_time) + 2*ps.pause_time) + ( ps.dit_time + ps.pause_time );
+            digi_buffer.run( ps.dah_time /*+ ps.pause_time*/ );
+            set_dit( true );
+            CwGen_DitIRQ();
+            digi_buffer.run( (ps.dit_time + ps.pause_time)*2 );
+            set_dit( false );
+            digi_buffer.run( ps.dah_time + ps.pause_time );
+            set_dah( false );
+            digi_buffer.run( ps.pause_time*2 );
+            THEN( "the digibuffer should contains 'X'" ) {
+                CAPTURE( ps.space_timer, ps.cw_state, ps.break_timer, ps.port_state, ps.sending_char, digi_buffer.in, digi_buffer.out );
+                CHECK( digi_buffer.out == "X" );
             }
         }
     }
