@@ -32,7 +32,7 @@
  *   RadioManagement_Request_TxOff
  */
 
-extern "C" {
+namespace {
 // prevent gcc find these headers in original folder.
 #include "cw_gen.h"
 #include "uhsdr_digi_buffer.h"
@@ -41,7 +41,6 @@ extern "C" {
 #include "softdds.h"
 #include "cat_driver.h"
 #include "ui_driver.h"
-}
 
 struct radio_global_state {
     uint8_t cw_paddle_reverse;
@@ -74,10 +73,8 @@ void set_ts_default( ) {
     ts.dmod_mode = DEMOD_CW;
 }
 
-extern "C" {
 #include "drivers/audio/cw/cw_gen.h"
 #include "drivers/audio/cw/cw_gen.c"
-}
 
 constexpr uint32_t IQ_BLOCK_SIZE = 32;
 float32_t i[IQ_BLOCK_SIZE] = { }, q[IQ_BLOCK_SIZE] = { };
@@ -213,6 +210,8 @@ void set_cat_PTT( bool ptt ) {
 bool CatDriver_CWKeyPressed( ) { return cat.cw_key_down; }
 bool CatDriver_CatPttActive( ) { return cat.ptt_active; }
 
+} // namespace
+
 SCENARIO( "Straight key: ", "[]" ) {
     GIVEN( "ts: default except txrx_mode: TRX_MODE_TX, cw_keyer_mode: STRAIGHT." ) {
         set_ts_default();
@@ -301,13 +300,12 @@ SCENARIO( "Iambic A CW mode: ", "[]" ) {
         CwGen_Init();
         ts.cw_keyer_mode = CW_KEYER_MODE_IAM_A;
         ts.txrx_mode = TRX_MODE_TX;
-        WHEN( "First pressed Dah and just after Dit" ) {
+        WHEN( "First Dah, next Dit" ) {
             /** @todo > Implement method to count run numbers for particular string. */
             set_dah( true );
             CwGen_Process( i, q, 32 );
-            CwGen_Process( i, q, 32 );
             set_dit( true );
-            THEN( " after it runs enough to generate C digibuffer should contain C." ) {
+            THEN( " after it runs enough to generate (_._.) digibuffer should contain C." ) {
                 uint32_t c_time = (( ps.dit_time + ps.dah_time) + 2*ps.pause_time)*2;
                 digi_buffer.run( c_time - ps.pause_time );
                 set_dah(false);
@@ -317,7 +315,7 @@ SCENARIO( "Iambic A CW mode: ", "[]" ) {
                 CAPTURE( ps.space_timer, ps.cw_state, ps.break_timer, ps.port_state, ps.sending_char, digi_buffer.in, digi_buffer.out );
                 CHECK( digi_buffer.out == "C" );
             }
-            AND_THEN( " after it runs enough to generate N digibuffer should contain N." ) {
+            AND_THEN( " after it runs enough to generate (_.) digibuffer should contain N." ) {
                 uint32_t c_time = (( ps.dit_time + ps.dah_time) + 2*ps.pause_time)*1;
                 digi_buffer.run( c_time - ps.pause_time );
                 set_dah(false);
@@ -327,7 +325,7 @@ SCENARIO( "Iambic A CW mode: ", "[]" ) {
                 CAPTURE( ps.space_timer, ps.cw_state, ps.break_timer, ps.port_state, ps.sending_char, digi_buffer.in, digi_buffer.out );
                 CHECK( digi_buffer.out == "N" );
             }
-            AND_THEN( " after it runs enough to generate K digibuffer should contain K." ) {
+            AND_THEN( " after it runs enough to generate (_._) digibuffer should contain K." ) {
                 uint32_t c_time = (( ps.dit_time + ps.dah_time) + 2*ps.pause_time) + ( ps.dah_time + ps.pause_time );
                 digi_buffer.run( c_time - ps.pause_time );
                 set_dah(false);
@@ -338,10 +336,9 @@ SCENARIO( "Iambic A CW mode: ", "[]" ) {
                 CHECK( digi_buffer.out == "K" );
             }
         }
-        WHEN( "First pressed Dit and just after Dah" ) {
+        WHEN( "First Dit, next Dah" ) {
             /** @todo > Implement method to count run numbers for particular string. */
             set_dit( true );
-            CwGen_Process( i, q, 32 );
             CwGen_Process( i, q, 32 );
             set_dah( true );
             THEN( " after it runs enough to generate A digibuffer should contain A." ) {
@@ -365,21 +362,137 @@ SCENARIO( "Iambic A CW mode: ", "[]" ) {
                 CHECK( digi_buffer.out == "R" );
             }
         }
+        WHEN("first pressed Dit") {
+            set_dit( true );
+            THEN( " after it runs enough to generate (..), Dah pressed and,"
+                  "runs for dah (_) and after released, runs for one more (.): digibuffer should contain 'F'." ) {
+                digi_buffer.run( ( ps.pause_time + ps.dit_time )*2 );
+                set_dah(true );
+                digi_buffer.run( ps.dah_time );
+                set_dah( false );
+                digi_buffer.run( ps.pause_time + ps.dit_time );
+                set_dit(false );
+                digi_buffer.run( ps.pause_time + 1 );
+
+                CAPTURE( ps.space_timer, ps.cw_state, ps.break_timer, ps.port_state, ps.sending_char, digi_buffer.in, digi_buffer.out );
+                CHECK( digi_buffer.out == "F" );
+            }
+        }
+        WHEN("first pressed Dah") {
+            set_dah( true );
+            THEN( " after it runs enough to generate (__), Dit pressed and,"
+                  "runs for (.) and after released, runs for one more (_): digibuffer should contain 'Q'." ) {
+                digi_buffer.run( ( ps.pause_time + ps.dah_time )*2 );
+                set_dit(true );
+                digi_buffer.run( ps.dit_time );
+                set_dit( false );
+                digi_buffer.run( ps.pause_time + ps.dah_time );
+                set_dah(false );
+                digi_buffer.run( ps.pause_time + 1 );
+
+                CAPTURE( ps.space_timer, ps.cw_state, ps.break_timer, ps.port_state, ps.sending_char, digi_buffer.in, digi_buffer.out );
+                CHECK( digi_buffer.out == "Q" );
+            }
+        }
     }
 }
 
 SCENARIO( "Iambic B CW mode: ", "[]" ) {
     GIVEN( "" ) {
         digi_buffer.reset_state();
-        WHEN( "" ) {
-            THEN( "" ) {
+        set_ts_default();
+        set_dah( false );
+        set_dit( false );
+        CwGen_Init();
+        ts.cw_keyer_mode = CW_KEYER_MODE_IAM_B;
+        ts.txrx_mode = TRX_MODE_TX;
+        WHEN( "first Dah, next Dit" ) {
+            set_dah( true );
+            CwGen_Process( i, q, 32 );
+            set_dit( true );
+            THEN( " after it runs enough to generate (_._), levers released,"
+                  "run for one more (.), digibuffer should contain C." ) {
+                digi_buffer.run( ps.dah_time + ps.pause_time + ps.dit_time + ps.pause_time + ps.dah_time );
+                set_dah(false);
+                set_dit(false);
+                digi_buffer.run( ps.pause_time + ps.pause_time + ps.dit_time );
+
+                CAPTURE( ps.space_timer, ps.cw_state, ps.break_timer, ps.port_state, ps.sending_char, digi_buffer.in, digi_buffer.out );
+                CHECK( digi_buffer.out == "C" );
+            }
+            THEN( " after it runs enough to generate (_.), levers released,"
+                  "run for one more (_), digibuffer should contain 'K'." ) {
+                digi_buffer.run( ps.dah_time + ps.pause_time + ps.dit_time );
+                set_dah(false);
+                set_dit(false);
+                digi_buffer.run( ps.pause_time + ps.pause_time + ps.dah_time );
+
+                CAPTURE( ps.space_timer, ps.cw_state, ps.break_timer, ps.port_state, ps.sending_char, digi_buffer.in, digi_buffer.out );
+                CHECK( digi_buffer.out == "K" );
+            }
+        }
+        WHEN("first Dit, next Dah") {
+            set_dit( true );
+            CwGen_Process( i, q, 32 );
+            set_dah( true );
+            THEN( " after it runs enough to generate (._), levers released,"
+                  "run for one more (.), digibuffer should contain R." ) {
+                digi_buffer.run( ps.dah_time + ps.pause_time + ps.dit_time );
+                set_dah(false);
+                set_dit(false);
+                digi_buffer.run( ps.pause_time + ps.pause_time + ps.dit_time );
+
+                CAPTURE( ps.space_timer, ps.cw_state, ps.break_timer, ps.port_state, ps.sending_char, digi_buffer.in, digi_buffer.out );
+                CHECK( digi_buffer.out == "R" );
+            }
+            THEN( " after it runs enough to generate (._._.), levers released,"
+                  "run for one more (_), digibuffer should contain '.'" ) {
+                digi_buffer.run( (ps.dit_time + ps.pause_time)*2 + (ps.dah_time + ps.pause_time)*2 + ps.dit_time );
+                set_dah(false);
+                set_dit(false);
+                digi_buffer.run( ps.pause_time + ps.pause_time + ps.dah_time );
+
+                CAPTURE( ps.space_timer, ps.cw_state, ps.break_timer, ps.port_state, ps.sending_char, digi_buffer.in, digi_buffer.out );
+                CHECK( digi_buffer.out == "." );
+            }
+        }
+        WHEN("first pressed Dit") {
+            set_dit( true );
+            THEN( " after it runs enough to generate (..), Dah pressed and,"
+                  "runs for dah (_) and after released, runs for one more (.): digibuffer should contain 'F'." ) {
+                digi_buffer.run( ( ps.pause_time + ps.dit_time )*2 );
+                set_dah(true );
+                digi_buffer.run( ps.dah_time );
+                set_dah( false );
+                digi_buffer.run( ps.pause_time + ps.dit_time );
+                set_dit(false );
+                digi_buffer.run( ps.pause_time + 1 );
+
+                CAPTURE( ps.space_timer, ps.cw_state, ps.break_timer, ps.port_state, ps.sending_char, digi_buffer.in, digi_buffer.out );
+                CHECK( digi_buffer.out == "F" );
+            }
+        }
+        WHEN("first pressed Dah") {
+            set_dah( true );
+            THEN( " after it runs enough to generate (__), Dit pressed and,"
+                  "runs for (.) and after released, runs for one more (_): digibuffer should contain 'Q'." ) {
+                digi_buffer.run( ( ps.pause_time + ps.dah_time )*2 );
+                set_dit(true );
+                digi_buffer.run( ps.dit_time );
+                set_dit( false );
+                digi_buffer.run( ps.pause_time + ps.dah_time );
+                set_dah(false );
+                digi_buffer.run( ps.pause_time + 1 );
+
+                CAPTURE( ps.space_timer, ps.cw_state, ps.break_timer, ps.port_state, ps.sending_char, digi_buffer.in, digi_buffer.out );
+                CHECK( digi_buffer.out == "Q" );
             }
         }
     }
 }
 
 SCENARIO( "Ultimatic CW mode: ", "[]" ) {
-    GIVEN( "" ) {
+    GIVEN( "Tx mode, default state, all levers are released" ) {
         set_ts_default();
         set_dah( false );
         set_dit( false );
@@ -389,8 +502,7 @@ SCENARIO( "Ultimatic CW mode: ", "[]" ) {
         digi_buffer.reset_state();
         WHEN( "paddles depressed to imitate 'P'" ) {
             set_dit( true );
-            // uint32_t c_time = (( ps.dit_time + ps.dah_time) + 2*ps.pause_time) + ( ps.dit_time + ps.pause_time );
-            digi_buffer.run( ps.dit_time /*+ ps.pause_time*/ );
+            digi_buffer.run( ps.dit_time );
             set_dah( true );
             digi_buffer.run( (ps.dah_time + ps.pause_time)*2 );
             set_dah( false );
@@ -398,24 +510,23 @@ SCENARIO( "Ultimatic CW mode: ", "[]" ) {
             set_dit( false );
             digi_buffer.run( ps.pause_time*2 );
             THEN( "the digibuffer should contains 'P'" ) {
-                CAPTURE( ps.space_timer, ps.cw_state, ps.break_timer, ps.port_state, ps.sending_char, digi_buffer.in, digi_buffer.out );
+                CAPTURE( ps.space_timer, ps.cw_state, ps.break_timer, ps.port_state, ps.sending_char,
+                      ps.ultim, digi_buffer.in, digi_buffer.out );
                 CHECK( digi_buffer.out == "P" );
             }
         }
         WHEN( "paddles depressed to imitate 'X'" ) {
             set_dah( true );
-            CwGen_DahIRQ();
-            // uint32_t c_time = (( ps.dit_time + ps.dah_time) + 2*ps.pause_time) + ( ps.dit_time + ps.pause_time );
-            digi_buffer.run( ps.dah_time /*+ ps.pause_time*/ );
+            digi_buffer.run( ps.dah_time );
             set_dit( true );
-            CwGen_DitIRQ();
             digi_buffer.run( (ps.dit_time + ps.pause_time)*2 );
             set_dit( false );
             digi_buffer.run( ps.dah_time + ps.pause_time );
             set_dah( false );
             digi_buffer.run( ps.pause_time*2 );
             THEN( "the digibuffer should contains 'X'" ) {
-                CAPTURE( ps.space_timer, ps.cw_state, ps.break_timer, ps.port_state, ps.sending_char, digi_buffer.in, digi_buffer.out );
+                CAPTURE( ps.space_timer, ps.cw_state, ps.break_timer, ps.port_state, ps.sending_char,
+                         ps.ultim, digi_buffer.in, digi_buffer.out );
                 CHECK( digi_buffer.out == "X" );
             }
         }
@@ -445,7 +556,32 @@ SCENARIO( "Feeding CW from DigiBuffer: ", "[]" ) {
                 CHECK( ts.txrx_mode == TRX_MODE_RX );
             }
         }
+        WHEN( "" ) {
+            ts.cw_keyer_mode = CW_KEYER_MODE_ULTIMATE;
+
+            digi_buffer.push_in_buffer( "HELLO" );
+            digi_buffer.run( SEQUENCE::ALL );
+
+            THEN( "" ) {
+                CAPTURE( ps.space_timer, ps.cw_state, ps.break_timer, ps.port_state, ps.sending_char );
+                CHECK( digi_buffer.out == "HELLO " );
+                CHECK( ts.txrx_mode == TRX_MODE_RX );
+            }
+        }
         WHEN( "space at the end of macro it shouldn't stuck in TX and " ) {
+
+            digi_buffer.push_in_buffer( "E   E  " );
+            /** @todo > add method to count required runs for buffer with spaces within. */
+            digi_buffer.run( 10000 ); // should be enough to "eat all buffer"
+
+            THEN( "IN buffer should be empty, and mode RX." ) {
+                CAPTURE( ps.space_timer, ps.cw_state, ps.break_timer, ps.port_state, ps.sending_char, digi_buffer.in, digi_buffer.out );
+                CHECK( digi_buffer.in == "" );
+                CHECK( ts.txrx_mode == TRX_MODE_RX );
+            }
+        }
+        WHEN( "Ultimatic mode; space at the end of macro it shouldn't stuck in TX and " ) {
+            ts.cw_keyer_mode = CW_KEYER_MODE_ULTIMATE;
 
             digi_buffer.push_in_buffer( "E   E  " );
             /** @todo > add method to count required runs for buffer with spaces within. */
