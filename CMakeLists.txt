@@ -19,8 +19,3 @@ target_include_directories(catch-all-tests PRIVATE
         )
 
 target_link_libraries(catch-all-tests catch2)
-
-add_custom_command(
-        TARGET catch-all-tests POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/lib/catch2/libcatch2.dll ${CMAKE_CURRENT_BINARY_DIR}/.
-)
